@@ -21,7 +21,7 @@ browser to run it. Everything below lives in that one file.
 
 Views are plain `<div>`s toggled with `style.display`. Only one is visible at a time.
 
-- `#langView` — language picker, the only view visible on load
+- `#langView` — language picker, shown only when no saved language exists
 - `#homeView` — hero, progress bar, `#moduleGrid` (rendered by `renderHome()`)
 - `#lessonView` — `#lessonContent` (rendered by `renderLesson()`) plus the nav row
 - `#completeView` — certificate strip, shown after the last module
@@ -33,15 +33,44 @@ There is no router and no history handling. Navigation is: `setLang()` →
 
 ### State
 
-Four module-scoped globals, reset on page load — nothing is persisted:
+Four module-scoped globals:
 
 ```js
 var lang=null, currentMod=0, completed={}, quizDone=false;
 ```
 
 `completed` is an index-keyed map (`{0:true, 2:true}`), counted by `countDone()`.
-Reloading the page loses all progress. If you are asked to make progress stick,
-that means adding `localStorage` — it does not exist today.
+`currentMod` and `quizDone` are per-visit and deliberately not saved — a returning
+learner lands on the home grid, not back inside a half-read lesson.
+
+### Persistence
+
+`lang` and `completed` are stored in `localStorage` under `STORE_KEY`
+(`"mprAcademy.v1"`) as one JSON blob. Three helpers own it:
+
+- `saveProgress()` — called from `setLang()`, `switchLang()` and `nextModule()`.
+  Those are the only three places state changes in a way worth keeping; if you add
+  a fourth, call it there too.
+- `loadProgress()` — runs at the bottom of the script, before
+  `if(lang)showHomeView()`. Restores the language and completed set.
+- `clearProgress()` — removes the entry; used when saved data is unreadable.
+
+`loadProgress()` treats storage as hostile, and should stay that way:
+
+- every `localStorage` access is wrapped in `try/catch`, so Safari private mode or
+  a browser with site data blocked degrades to a normal unsaved session rather
+  than throwing
+- `JSON.parse` failures clear the entry and fall back to the language picker
+- `lang` is accepted only if it is exactly `'en'` or `'fr'`
+- completed indices are parsed with `parseInt` and range-checked against
+  `T.en.modules.length`, so a stale save from a longer module list cannot push the
+  progress bar past 100%
+
+Bump `STORE_KEY` to `v2` if you ever change the shape of the saved object.
+
+Because a saved language skips `#langView`, the hero's "Switch language" link is
+the only way to change language after the first visit. There is no reset-progress
+control; clearing the key by hand is currently the only way to start over.
 
 ## Content lives in `T`
 
@@ -149,3 +178,6 @@ There are no tests and no linter. After editing:
    mid-lesson.
 3. Confirm the progress bar reaches 100% and the module count in `completeMsg`
    matches reality.
+4. Reload mid-way and confirm the saved language and completed modules come back,
+   then clear the `mprAcademy.v1` key and confirm a first visit still starts on
+   the language picker.

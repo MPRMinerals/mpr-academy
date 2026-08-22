@@ -254,9 +254,20 @@ quiz:{q:"En FCA, quand le risque est-il transf\u00e9r\u00e9 de MPR \u00e0 l\u201
 body:'<div class="lesson-body"><p>MPR utilise des <strong>Lettres de Cr\u00e9dit (LC) \u00e0 vue</strong> \u2014 garanties bancaires \u2014 pour chaque exp\u00e9dition de cathodes.</p><h3>Qu\u2019est-ce qu\u2019une LC ?</h3><p>Un engagement irr\u00e9vocable de la <strong>banque de l\u2019acheteur</strong> de payer MPR, \u00e0 condition que les documents corrects soient pr\u00e9sent\u00e9s dans les d\u00e9lais.</p><h3>Que signifie "\u00e0 vue" ?</h3><p>Paiement <em>imm\u00e9diat</em> apr\u00e8s pr\u00e9sentation des documents conformes \u2014 g\u00e9n\u00e9ralement sous 5 jours ouvrables.</p><div class="flow-row"><div class="flow-box">Contrat sign\u00e9</div><div class="flow-arrow">\u2192</div><div class="flow-box">LC \u00e9mise</div><div class="flow-arrow">\u2192</div><div class="flow-box">MPR livre</div><div class="flow-arrow">\u2192</div><div class="flow-box">Documents pr\u00e9sent\u00e9s</div><div class="flow-arrow">\u2192</div><div class="flow-box green">Paiement \u2713</div></div><h3>Documents que MPR pr\u00e9sente</h3><ul class="step-list"><li><div class="step-num">1</div>Facture commerciale \u2014 quantit\u00e9, prix LME, valeur totale</li><li><div class="step-num">2</div>Certificat de pesage / analyse \u2014 sign\u00e9 par SGS / Bureau Veritas</li><li><div class="step-num">3</div>R\u00e9c\u00e9piss\u00e9 d\u2019entrep\u00f4t \u2014 preuve de livraison FCA</li><li><div class="step-num">4</div>Liste de colisage \u2014 liasses, plaques, poids</li><li><div class="step-num">5</div>Certificat d\u2019origine \u2014 confirme l\u2019origine RDC</li></ul><div class="key-fact">\ud83d\udca1 La LC signifie que MPR ne d\u00e9pend PAS de la volont\u00e9 de paiement de l\u2019acheteur \u2014 la banque s\u2019est d\u00e9j\u00e0 engag\u00e9e.</div><h3>Glossaire</h3><div class="glossary-row"><div class="gterm">Banque \u00e9mettrice</div><div class="gdef">Banque de l\u2019acheteur \u2014 cr\u00e9e et garantit la LC</div></div><div class="glossary-row"><div class="gterm">Banque notificatrice</div><div class="gdef">Banque de MPR \u2014 re\u00e7oit et valide la LC</div></div><div class="glossary-row"><div class="gterm">Documents conformes</div><div class="gdef">Correspondent exactement aux termes LC</div></div><div class="glossary-row"><div class="gterm">Prix LME</div><div class="gdef">London Metal Exchange \u2014 base de calcul de la facture</div></div></div>',
 quiz:{q:"Quel est l\u2019avantage principal d\u2019une LC \u00e0 vue pour MPR ?",opts:["Elle permet le paiement en 90 jours","La banque de l\u2019acheteur garantit le paiement imm\u00e9diat sur documents conformes","Elle supprime le besoin de documents","Elle accorde une remise \u00e0 l\u2019acheteur"],ans:1,expl:"Avec une LC \u00e0 vue, MPR est pay\u00e9 imm\u00e9diatement une fois les documents conformes pr\u00e9sent\u00e9s \u2014 la garantie bancaire \u00e9limine le risque de contrepartie."}}
 ]}};
+var STORE_KEY="mprAcademy.v1";
 var lang=null,currentMod=0,completed={},quizDone=false;
-function setLang(l){lang=l;document.getElementById('langView').style.display='none';renderHome();document.getElementById('homeView').style.display='block';}
-function switchLang(){lang=lang==='en'?'fr':'en';renderHome();}
+function saveProgress(){try{localStorage.setItem(STORE_KEY,JSON.stringify({lang:lang,completed:completed}));}catch(e){}}
+function clearProgress(){try{localStorage.removeItem(STORE_KEY);}catch(e){}}
+function loadProgress(){var raw;try{raw=localStorage.getItem(STORE_KEY);}catch(e){return;}
+if(!raw)return;
+var s;try{s=JSON.parse(raw);}catch(e){clearProgress();return;}
+if(!s||typeof s!=='object'){clearProgress();return;}
+if(s.lang==='en'||s.lang==='fr')lang=s.lang;
+var max=T.en.modules.length;
+if(s.completed&&typeof s.completed==='object'){for(var k in s.completed){var i=parseInt(k,10);if(!isNaN(i)&&i>=0&&i<max&&s.completed[k])completed[i]=true;}}}
+function showHomeView(){document.getElementById('langView').style.display='none';renderHome();document.getElementById('homeView').style.display='block';}
+function setLang(l){lang=l;saveProgress();showHomeView();}
+function switchLang(){lang=lang==='en'?'fr':'en';saveProgress();renderHome();}
 function countDone(){var c=0;for(var k in completed){if(completed[k])c++;}return c;}
 function renderHome(){
 var t=T[lang];
@@ -288,7 +299,7 @@ for(var i=0;i<btns.length;i++){if(i===q.ans)btns[i].classList.add('correct');els
 var fb=document.getElementById('quizFeedback');var ok=idx===q.ans;
 fb.style.cssText='display:block;background:'+(ok?'#e6f4ea':'#fef9e7')+';color:'+(ok?'#137333':'#b06000')+';padding:10px 14px;border-radius:8px;';
 fb.textContent=(ok?t.correctPfx:t.wrongPfx)+q.expl;completed[currentMod]=true;}
-function nextModule(){var t=T[lang];completed[currentMod]=true;
+function nextModule(){var t=T[lang];completed[currentMod]=true;saveProgress();
 if(currentMod===t.modules.length-1){
 document.getElementById('lessonView').style.display='none';
 document.getElementById('completeView').style.display='block';
@@ -312,6 +323,8 @@ document.getElementById('completionModal').classList.remove('show');
 document.getElementById('certDateLine').textContent+='\u00a0\u2014 '+name;
 alert(lang==='fr'?'Merci '+name+' ! Votre compl\u00e9tion a \u00e9t\u00e9 enregistr\u00e9e.':'Thank you '+name+'! Your completion has been recorded.');}
 function skipModal(){document.getElementById('completionModal').classList.remove('show');}
+loadProgress();
+if(lang)showHomeView();
 </script>
 </body>
 </html>
