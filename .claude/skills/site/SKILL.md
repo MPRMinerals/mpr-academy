@@ -22,7 +22,8 @@ browser to run it. Everything below lives in that one file.
 Views are plain `<div>`s toggled with `style.display`. Only one is visible at a time.
 
 - `#langView` — language picker, shown only when no saved language exists
-- `#homeView` — hero, progress bar, `#moduleGrid` (rendered by `renderHome()`)
+- `#homeView` — hero, progress bar, conditional reset link, `#moduleGrid`
+  (all rendered by `renderHome()`)
 - `#lessonView` — `#lessonContent` (rendered by `renderLesson()`) plus the nav row
 - `#completeView` — certificate strip plus the reset link, shown after the last module
 - `#completionModal` — name/email capture, opens 900 ms after `#completeView`
@@ -71,12 +72,22 @@ Bump `STORE_KEY` to `v2` if you ever change the shape of the saved object.
 Because a saved language skips `#langView`, the hero's "Switch language" link is
 the only way to change language after the first visit.
 
-`resetProgress()` (the reset link on `#completeView`) clears `completed`, resets
-`currentMod` and `quizDone`, saves, and drops the learner back on the home grid.
-It keeps the saved language — it resets progress, not the whole profile — and it
-is guarded by a `confirm()`. Note the certificate view is reachable only by
-finishing the last module, so a returning learner at 5/5 has to replay module 5
-to get at the reset link.
+`resetProgress()` clears `completed`, resets `currentMod` and `quizDone`, saves,
+and lands the learner on the home grid. It keeps the saved language — it resets
+progress, not the whole profile — and it is guarded by a `confirm()` whose copy
+takes the module count as an argument.
+
+Two links call it, both `.reset-link`:
+
+- `#resetBtn` on `#completeView`, under "Back to Academy". Always present there.
+- `#homeResetBtn` on `#homeView`, under the progress label. `renderHome()` shows
+  it only when `done > 0` — there is nothing to reset at 0/5, and the certificate
+  view is otherwise reachable only by finishing the last module, which would
+  strand a returning learner at 5/5.
+
+Both labels are set from `t.resetBtn` at render time, so they follow a language
+switch. If you add a third entry point, call `resetProgress()` rather than
+clearing state inline.
 
 ## Content lives in `T`
 

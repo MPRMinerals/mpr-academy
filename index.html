@@ -82,6 +82,7 @@ body{font-family:Arial,sans-serif;background:#f5f5f0;min-height:100vh;padding:20
 .home-btn{margin-top:1.2rem;padding:11px 30px;border-radius:8px;background:#B87333;color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;}
 .reset-link{font-size:12px;color:#aaa;cursor:pointer;margin-top:14px;text-decoration:underline;display:block;}
 .reset-link:hover{color:#B87333;}
+.reset-link.home-reset{margin-top:0;margin-bottom:1rem;text-align:center;}
 .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:100;align-items:center;justify-content:center;}
 .modal-overlay.show{display:flex;}
 .modal{background:#fff;border-radius:16px;padding:2rem;max-width:400px;width:90%;text-align:center;}
@@ -128,6 +129,7 @@ body{font-family:Arial,sans-serif;background:#f5f5f0;min-height:100vh;padding:20
     <div class="progress-wrap">
       <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressBar" style="width:0%"></div></div>
       <div class="prog-label" id="progressLabel"></div>
+      <span class="reset-link home-reset" id="homeResetBtn" onclick="resetProgress()"></span>
     </div>
     <div class="module-grid" id="moduleGrid"></div>
   </div>
@@ -284,6 +286,7 @@ document.getElementById('switchLangBtn').textContent=t.switchLang;
 var done=countDone();
 document.getElementById('progressLabel').textContent=t.progressLabel(done,t.modules.length);
 document.getElementById('progressBar').style.width=(done/t.modules.length*100)+'%';
+var rb=document.getElementById('homeResetBtn');rb.textContent=t.resetBtn;rb.style.display=done>0?'block':'none';
 var h='';for(var i=0;i<t.modules.length;i++){var m=t.modules[i];var d=completed[i];
 h+='<div class="mod-card'+(d?' done':'')+'" onclick="openModule('+i+')">';
 h+='<div class="mod-num">Module '+m.num+'</div><div class="mod-title">'+m.title+'</div><div class="mod-sub">'+m.sub+'</div>';
