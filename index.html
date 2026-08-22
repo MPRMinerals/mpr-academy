@@ -80,6 +80,8 @@ body{font-family:Arial,sans-serif;background:#f5f5f0;min-height:100vh;padding:20
 .completion p{color:#666;font-size:14px;line-height:1.6;}
 .cert-strip{margin:1.5rem auto 0;max-width:360px;border:2px solid #B87333;border-radius:12px;padding:1.2rem;background:#fff;}
 .home-btn{margin-top:1.2rem;padding:11px 30px;border-radius:8px;background:#B87333;color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;}
+.reset-link{font-size:12px;color:#aaa;cursor:pointer;margin-top:14px;text-decoration:underline;display:block;}
+.reset-link:hover{color:#B87333;}
 .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:100;align-items:center;justify-content:center;}
 .modal-overlay.show{display:flex;}
 .modal{background:#fff;border-radius:16px;padding:2rem;max-width:400px;width:90%;text-align:center;}
@@ -157,6 +159,7 @@ body{font-family:Arial,sans-serif;background:#f5f5f0;min-height:100vh;padding:20
         <p id="certDateLine" style="font-size:12px;color:#B87333;margin-top:4px;font-weight:700;"></p>
       </div>
       <button class="home-btn" onclick="goHome()" id="completeBtn"></button>
+      <span class="reset-link" onclick="resetProgress()" id="resetBtn"></span>
     </div>
   </div>
 </div>
@@ -189,6 +192,8 @@ completeTitle:"Congratulations!",
 completeMsg:"You have successfully completed all 5 modules of the MPR Copper Cathode Academy.",
 certMsg:"Certificate of completion \u2014 MPR Copper Cathode Training Program",
 completeBtn:"Back to Academy",
+resetBtn:"Reset my progress",
+resetConfirm:function(t){return "Reset your progress? All "+t+" modules will be marked as not started.";},
 modalTitle:"Register your completion",
 modalMsg:"Enter your details to notify the MPR training team and receive your confirmation.",
 modalBtn:"Submit & get confirmation",modalSkip:"Skip for now",
@@ -227,6 +232,8 @@ completeTitle:"F\u00e9licitations !",
 completeMsg:"Vous avez compl\u00e9t\u00e9 avec succ\u00e8s les 5 modules de l\u2019Acad\u00e9mie Cathode Cuivre MPR.",
 certMsg:"Attestation de compl\u00e9tion \u2014 Programme de formation MPR Cathode Cuivre",
 completeBtn:"Retour \u00e0 l\u2019Acad\u00e9mie",
+resetBtn:"R\u00e9initialiser ma progression",
+resetConfirm:function(t){return "R\u00e9initialiser votre progression ? Les "+t+" modules seront marqu\u00e9s comme non commenc\u00e9s.";},
 modalTitle:"Enregistrez votre compl\u00e9tion",
 modalMsg:"Entrez vos coordonn\u00e9es pour notifier l\u2019\u00e9quipe formation MPR.",
 modalBtn:"Soumettre et recevoir confirmation",modalSkip:"Passer pour l\u2019instant",
@@ -308,12 +315,15 @@ document.getElementById('completeMsg').textContent=t.completeMsg;
 document.getElementById('certMsg').textContent=t.certMsg;
 var d=new Date();document.getElementById('certDateLine').textContent=d.toLocaleDateString(lang==='fr'?'fr-FR':'en-GB',{year:'numeric',month:'long',day:'numeric'});
 document.getElementById('completeBtn').textContent=t.completeBtn;
+document.getElementById('resetBtn').textContent=t.resetBtn;
 document.getElementById('modalTitle').textContent=t.modalTitle;
 document.getElementById('modalMsg').textContent=t.modalMsg;
 document.getElementById('modalBtn').textContent=t.modalBtn;
 document.getElementById('modalSkip').textContent=t.modalSkip;
 renderHome();setTimeout(function(){document.getElementById('completionModal').classList.add('show');},900);
 }else{currentMod++;quizDone=false;renderLesson();}}
+function resetProgress(){var t=T[lang];if(!confirm(t.resetConfirm(t.modules.length)))return;
+completed={};currentMod=0;quizDone=false;saveProgress();goHome();}
 function goHome(){document.getElementById('lessonView').style.display='none';document.getElementById('completeView').style.display='none';document.getElementById('homeView').style.display='block';renderHome();}
 function submitCompletion(){var name=document.getElementById('modalName').value.trim();var email=document.getElementById('modalEmail').value.trim();
 if(!name||!email){alert(lang==='fr'?'Veuillez remplir tous les champs.':'Please fill in all fields.');return;}

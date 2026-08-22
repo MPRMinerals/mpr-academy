@@ -24,7 +24,7 @@ Views are plain `<div>`s toggled with `style.display`. Only one is visible at a 
 - `#langView` — language picker, shown only when no saved language exists
 - `#homeView` — hero, progress bar, `#moduleGrid` (rendered by `renderHome()`)
 - `#lessonView` — `#lessonContent` (rendered by `renderLesson()`) plus the nav row
-- `#completeView` — certificate strip, shown after the last module
+- `#completeView` — certificate strip plus the reset link, shown after the last module
 - `#completionModal` — name/email capture, opens 900 ms after `#completeView`
 
 There is no router and no history handling. Navigation is: `setLang()` →
@@ -69,8 +69,14 @@ learner lands on the home grid, not back inside a half-read lesson.
 Bump `STORE_KEY` to `v2` if you ever change the shape of the saved object.
 
 Because a saved language skips `#langView`, the hero's "Switch language" link is
-the only way to change language after the first visit. There is no reset-progress
-control; clearing the key by hand is currently the only way to start over.
+the only way to change language after the first visit.
+
+`resetProgress()` (the reset link on `#completeView`) clears `completed`, resets
+`currentMod` and `quizDone`, saves, and drops the learner back on the home grid.
+It keeps the saved language — it resets progress, not the whole profile — and it
+is guarded by a `confirm()`. Note the certificate view is reachable only by
+finishing the last module, so a returning learner at 5/5 has to replay module 5
+to get at the reset link.
 
 ## Content lives in `T`
 
@@ -82,7 +88,9 @@ Each language object holds:
 - UI chrome: `heroTitle`, `heroSub`, `switchLang`, `homeLabel`, `nextLabel`,
   `finishLabel`, `quizLabel`, `correctPfx`, `wrongPfx`, `completeTitle`,
   `completeMsg`, `certMsg`, `completeBtn`, `modal*`
-- `progressLabel(done, total)` — a function, not a string
+- `progressLabel(done, total)` and `resetConfirm(total)` — functions, not strings.
+  They take the module count so the copy cannot go stale, unlike `completeMsg`
+  below.
 - `modules[]` — home-grid cards: `{num, title, sub}`
 - `lessons[]` — `{title, subtitle, body, quiz}` where `quiz` is
   `{q, opts[], ans, expl}` and `ans` is the **0-based index** of the correct option
