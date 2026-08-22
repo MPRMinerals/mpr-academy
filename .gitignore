@@ -1,0 +1,7 @@
+# Local Claude Code settings (personal, may contain machine-specific config)
+.claude/settings.local.json
+
+# Environment files — never commit secrets to this public repo
+.env
+.env.*
+!.env.example
