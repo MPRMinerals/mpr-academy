@@ -1,83 +1,102 @@
-# MPR Minerals Group — website
+# MPR Minerals Group
 
-Static, dependency-free corporate website for **MPR Minerals Group** — vertically integrated producer
-and direct seller of LME Grade A copper cathode. Trilingual: **English / Français / Español**.
+Single page corporate website for MPR Minerals Group, a vertically integrated copper cathode
+producer and direct seller. English, French and Spanish, switched in place with no reload.
+
+`index.html` is self contained. Everything the page needs is inside it: the stylesheet, the
+translations, the motion libraries, the complete logo and the Kuba strip. It opens correctly
+from a USB stick with no network. The only outbound request is Google Fonts, and that request
+cannot block first paint, so the page renders and reads normally offline.
 
 ```
-index.html            the website (single page)
-academy.html          the MPR Copper Cathode Academy app (unchanged, EN/FR)
-assets/site.css       design system + layout
-assets/site.js        language switching, navigation, reveal animations, contact form
-assets/i18n.js        all copy in the three languages — this is the file to edit for text
-assets/mpr-logo.jpg   the full logo (footer, social preview)
-assets/mpr-mark.webp  the lion mark, background removed (header, hero watermark)
-assets/mpr-lockup.webp
-                      mark + wordmark + tagline, background removed (Academy panel)
-robots.txt, sitemap.xml
+index.html      the delivered site, self contained
+media/          video and poster files, see media/README.md
+brand/          source artwork, build time only, see brand/README.md
+build/          the parts index.html is assembled from
+academy.html    the earlier Copper Cathode Academy training app, unchanged
 ```
 
-No build step, no framework. Open `index.html` in a browser, or serve the folder from any static host
-(GitHub Pages, Netlify, Vercel, S3, nginx).
+## Editing
 
-## Sections
-
-Hero · facts strip · The Group (produce / deliver / sell direct) · SX-EW process · Product
-specification · Trade terms (FCA Ndola, LC at sight, shipment flow, LC documents) · Operations
-(Likasi, Kolwezi, Ndola, Dubai) · Academy · Contact · Footer.
-
-## Design system
-
-Defined once as CSS custom properties at the top of `assets/site.css`.
-
-| Token | Value | Use |
-|---|---|---|
-| `--ink` | `#0A0A0A` | page ground |
-| `--carbon` | `#141312` | alternating sections |
-| `--panel` | `#1A1817` | cards, inputs |
-| `--copper` | `#C17A5A` | accent, labels, rules |
-| `--copper-lt` | `#E3A98C` | highlights, hover |
-| `--copper-dk` | `#8E5439` | gradient end |
-| `--white` | `#F5F2EE` | text |
-| `--stone` | `#8A8078` | secondary text |
-
-Typefaces: **Cormorant Garamond** (display), **Barlow** (body), **IBM Plex Mono** (labels, data,
-specification keys). The geometric band between sections is an SVG motif taken from the pattern in
-the logo's border.
-
-## Languages
-
-* Switch with the EN / FR / ES control in the header or footer.
-* The choice is remembered in `localStorage`; `?lang=fr` / `?lang=es` force a language, which is
-  useful for links in emails or campaigns.
-* Otherwise the browser language is used, falling back to English.
-* All text lives in `assets/i18n.js` as `key: "value"` pairs. To change wording, edit the value in
-  each of the three dictionaries — **every key must exist in `en`, `fr` and `es`** (165 keys).
-* Markup is tagged with `data-i18n="key"`. `data-i18n-attr="placeholder"` (or `content`,
-  `aria-label`) translates an attribute instead of the element's text.
-
-Key parity check:
+`index.html` is generated. Edit the parts in `build/`, then reassemble:
 
 ```bash
-node -e "global.window={};require('./assets/i18n.js');
-const d=window.MPR_I18N,k=Object.keys(d.en);
-for(const l of ['fr','es'])console.log(l,'missing:',k.filter(x=>!(x in d[l])));"
+python3 build/assemble.py
 ```
 
-## Before going live
+| File | What it holds |
+|---|---|
+| `build/head.html` | document head, meta, font link |
+| `build/body.html` | all markup, and the English copy, which is the base dictionary |
+| `build/style.css` | the design system and every rule |
+| `build/i18n.js` | the French and Spanish dictionaries |
+| `build/site.js` | language switching, motion, video, form |
 
-| Where | Current value | Action |
+English lives in the markup and is captured on load, so English is edited in `build/body.html`
+and French and Spanish in `build/i18n.js`. Every key must exist in both dictionaries. To add a
+string, tag the element with `data-i18n="your.key"`, or `data-i18n-html` if the copy carries
+markup, or `data-i18n-attr="placeholder"` to translate an attribute, then add the key to `fr`
+and `es`.
+
+Check key parity after editing:
+
+```bash
+node -e "eval(require('fs').readFileSync('build/i18n.js','utf8'));
+const dom=[...new Set([...require('fs').readFileSync('build/body.html','utf8')
+  .matchAll(/data-i18n=\"([^\"]+)\"/g)].map(m=>m[1]))].concat(['meta.title','meta.desc']);
+for(const l of ['fr','es']) console.log(l,'missing:',dom.filter(k=>!(k in MPR_T[l])));"
+```
+
+## Video
+
+Both slots are off until the files exist, which keeps the console clean on a fresh checkout.
+Drop the files into `media/` as named in `media/README.md`, then turn the slot on near the top
+of `build/site.js`:
+
+```js
+var MEDIA = { hero: true, band: true };
+```
+
+If a file is then missing or fails, the coded animation takes over on its own.
+
+## Settings to change before launch
+
+| Where | Value | Change to |
 |---|---|---|
-| `assets/site.js` → `CONTACT_EMAIL` | `info@mpr-minerals.com` | the real address (also used by the footer and contact block) |
-| `index.html` → `mailto:` links | `info@mpr-minerals.com` | same address |
-| `index.html` → canonical, `hreflang`, `og:url`, JSON-LD | `https://www.mpr-minerals.com/` | the real domain |
-| `sitemap.xml`, `robots.txt` | same domain | the real domain |
+| `build/site.js`, `CONTACT_EMAIL` | `info@mpr-minerals.com` | the real address |
+| `build/body.html`, the mailto link | `info@mpr-minerals.com` | the same address |
 
-The contact form has no backend: it composes a `mailto:` message from the fields. To collect
-submissions server-side, point the form at Formspree, Netlify Forms or your own endpoint and remove
-the `submit` handler in `assets/site.js`.
+The enquiry form has no backend. It composes a prefilled email. To post to a server instead,
+point the form at your endpoint and remove the submit handler in `build/site.js`.
 
-## Notes
+## What the site will not say
 
-* Fonts load from Google Fonts with system fallbacks — the page still holds together if the request
-  is blocked.
-* Respects `prefers-reduced-motion`; responsive from 360 px up; no horizontal scrolling.
+These are enforced, and a check script is included below. The bonded warehouse operator is
+never named. Current production capacity is never published: the only tonnages on the site are
+the Kambove build targets, labelled as such. No prices, premiums or the advance payment
+percentage. No licence or registry numbers. No bank names, account numbers or SWIFT details,
+only the fact that banking exists in the United Arab Emirates and the United States. No
+individual names or photographs. No em dashes or en dashes, in any language, including code
+comments.
+
+## Verifying a change
+
+Serve the folder and run the three checks. The content check is in the commit history under
+`build/`; the runtime and contrast checks need a browser.
+
+```bash
+python3 -m http.server 8000        # then open http://localhost:8000
+```
+
+The delivered file was verified at: mobile Lighthouse performance 94, accessibility 100, best
+practices 100, SEO 100; every rendered text style at or above WCAG AA contrast; language
+switching in all six directions including headlines; complete and readable with JavaScript
+disabled and with the media folder empty; no horizontal scroll at 390 px or 1920 px.
+
+## Motion
+
+GSAP with ScrollTrigger and SplitText, plus Lenis, all bundled inline under the GSAP standard
+license with their headers intact. The hero opening runs in CSS rather than script so first
+paint never waits on the bundle; GSAP drives the section headline reveals, the parallax, the
+chain rail, the counters and the pointer effects. `prefers-reduced-motion` disables all of it,
+including the animated cell.
